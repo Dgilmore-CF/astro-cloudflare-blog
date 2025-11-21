@@ -1,0 +1,352 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { BlogDB } from '../../lib/db';
+
+const user = Astro.locals.user;
+const runtime = Astro.locals.runtime;
+
+let stats = {
+  totalPosts: 0,
+  publishedPosts: 0,
+  draftPosts: 0,
+  totalViews: 0,
+};
+
+let recentPosts = [];
+
+if (runtime?.env?.DB) {
+  const db = new BlogDB(runtime.env.DB);
+  
+  // Get stats
+  const allPosts = await db.getPosts('all', 1000, 0);
+  stats.totalPosts = allPosts.length;
+  stats.publishedPosts = allPosts.filter(p => p.status === 'published').length;
+  stats.draftPosts = allPosts.filter(p => p.status === 'draft').length;
+  stats.totalViews = allPosts.reduce((sum, p) => sum + p.views, 0);
+  
+  // Get recent posts
+  recentPosts = await db.getPosts('all', 5, 0);
+}
+---
+
+<Layout title="Admin Dashboard - CloudBlog">
+  <div class="admin-container">
+    <div class="admin-header">
+      <h1>Admin Dashboard</h1>
+      <div class="user-info">
+        <span>Welcome, <strong>{user?.username}</strong></span>
+        <button id="logoutBtn" class="btn-secondary">Logout</button>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">📝</div>
+        <div class="stat-content">
+          <div class="stat-value">{stats.totalPosts}</div>
+          <div class="stat-label">Total Posts</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-content">
+          <div class="stat-value">{stats.publishedPosts}</div>
+          <div class="stat-label">Published</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">📄</div>
+        <div class="stat-content">
+          <div class="stat-value">{stats.draftPosts}</div>
+          <div class="stat-label">Drafts</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">👁️</div>
+        <div class="stat-content">
+          <div class="stat-value">{stats.totalViews}</div>
+          <div class="stat-label">Total Views</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions-section">
+      <h2>Quick Actions</h2>
+      <div class="actions-grid">
+        <a href="/admin/posts/new" class="action-card">
+          <div class="action-icon">➕</div>
+          <h3>New Post</h3>
+          <p>Create a new blog post</p>
+        </a>
+        
+        <a href="/admin/posts" class="action-card">
+          <div class="action-icon">📋</div>
+          <h3>Manage Posts</h3>
+          <p>Edit or delete posts</p>
+        </a>
+        
+        <a href="/search" class="action-card">
+          <div class="action-icon">🔍</div>
+          <h3>Search</h3>
+          <p>Search blog posts</p>
+        </a>
+        
+        <a href="/" class="action-card">
+          <div class="action-icon">🌐</div>
+          <h3>View Site</h3>
+          <p>Visit public blog</p>
+        </a>
+      </div>
+    </div>
+
+    <div class="recent-posts-section">
+      <h2>Recent Posts</h2>
+      {recentPosts.length === 0 ? (
+        <p class="no-posts">No posts yet. Create your first post!</p>
+      ) : (
+        <div class="posts-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Views</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentPosts.map((post) => (
+                <tr>
+                  <td><a href={`/posts/${post.slug}`} target="_blank">{post.title}</a></td>
+                  <td>
+                    <span class={`status-badge status-${post.status}`}>
+                      {post.status}
+                    </span>
+                  </td>
+                  <td>{post.views}</td>
+                  <td>{new Date(post.published_date).toLocaleDateString()}</td>
+                  <td>
+                    <a href={`/admin/posts/edit/${post.id}`} class="btn-edit">Edit</a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .admin-container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  .admin-header h1 {
+    font-size: 2rem;
+    color: #1f2937;
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .btn-secondary {
+    padding: 0.5rem 1rem;
+    background: #6b7280;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+
+  .btn-secondary:hover {
+    background: #4b5563;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .stat-icon {
+    font-size: 2.5rem;
+  }
+
+  .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .stat-label {
+    color: #6b7280;
+    font-size: 0.875rem;
+  }
+
+  .actions-section,
+  .recent-posts-section {
+    margin-bottom: 3rem;
+  }
+
+  .actions-section h2,
+  .recent-posts-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #1f2937;
+  }
+
+  .actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .action-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-align: center;
+  }
+
+  .action-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  .action-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .action-card h3 {
+    font-size: 1.125rem;
+    margin-bottom: 0.25rem;
+    color: #1f2937;
+  }
+
+  .action-card p {
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+
+  .posts-table {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead {
+    background: #f9fafb;
+  }
+
+  th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  td {
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  tbody tr:hover {
+    background: #f9fafb;
+  }
+
+  .status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .status-published {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  .status-draft {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .btn-edit {
+    padding: 0.375rem 0.75rem;
+    background: #2563eb;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+
+  .btn-edit:hover {
+    background: #1d4ed8;
+  }
+
+  .no-posts {
+    text-align: center;
+    padding: 3rem;
+    color: #6b7280;
+    background: white;
+    border-radius: 12px;
+  }
+</style>
+
+<script>
+  document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  });
+</script>

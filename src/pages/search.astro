@@ -1,0 +1,261 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PostCard from '../components/PostCard.astro';
+
+const query = Astro.url.searchParams.get('q') || '';
+---
+
+<Layout title={`Search${query ? `: ${query}` : ''} - CloudBlog`}>
+  <div class="search-page">
+    <h1>Search Blog</h1>
+    
+    <form id="searchForm" class="search-form">
+      <input 
+        type="search" 
+        name="q" 
+        id="searchInput" 
+        placeholder="Search posts..." 
+        value={query}
+        autofocus
+      />
+      <button type="submit">Search</button>
+    </form>
+
+    <div id="resultsContainer">
+      {query && (
+        <div id="results" class="results-section">
+          <div class="loading">Searching...</div>
+        </div>
+      )}
+      
+      {!query && (
+        <div class="empty-state">
+          <p>Enter a search term to find posts</p>
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .search-page {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .search-page h1 {
+    font-size: 2.5rem;
+    color: #1f2937;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  .search-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .search-form input {
+    flex: 1;
+    padding: 1rem;
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+  }
+
+  .search-form input:focus {
+    outline: none;
+    border-color: #2563eb;
+  }
+
+  .search-form button {
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+
+  .search-form button:hover {
+    transform: translateY(-2px);
+  }
+
+  .results-section {
+    margin-top: 2rem;
+  }
+
+  .results-header {
+    margin-bottom: 1.5rem;
+    color: #6b7280;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 3rem;
+    color: #6b7280;
+  }
+
+  .no-results {
+    text-align: center;
+    padding: 3rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .no-results h2 {
+    font-size: 1.5rem;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+  }
+
+  .no-results p {
+    color: #6b7280;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .empty-state p {
+    font-size: 1.125rem;
+    color: #6b7280;
+  }
+
+  .search-result {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .search-result:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  .search-result h2 {
+    margin-bottom: 0.5rem;
+  }
+
+  .search-result h2 a {
+    color: #1f2937;
+    text-decoration: none;
+  }
+
+  .search-result h2 a:hover {
+    color: #2563eb;
+  }
+
+  .search-result .snippet {
+    color: #6b7280;
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
+  }
+
+  .search-result .snippet :global(mark) {
+    background: #fef3c7;
+    padding: 0.125rem 0.25rem;
+    border-radius: 2px;
+  }
+
+  .search-result .meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: #9ca3af;
+  }
+</style>
+
+<script>
+  const searchForm = document.getElementById('searchForm') as HTMLFormElement;
+  const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+  const resultsContainer = document.getElementById('resultsContainer') as HTMLDivElement;
+
+  // Perform search on page load if query exists
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialQuery = urlParams.get('q');
+  
+  if (initialQuery) {
+    performSearch(initialQuery);
+  }
+
+  searchForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const query = searchInput.value.trim();
+    
+    if (query) {
+      // Update URL
+      const url = new URL(window.location.href);
+      url.searchParams.set('q', query);
+      window.history.pushState({}, '', url);
+      
+      performSearch(query);
+    }
+  });
+
+  async function performSearch(query: string) {
+    resultsContainer.innerHTML = '<div class="loading">Searching...</div>';
+
+    try {
+      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+
+      if (data.posts.length === 0) {
+        resultsContainer.innerHTML = `
+          <div class="no-results">
+            <h2>No results found</h2>
+            <p>Try different keywords or check your spelling</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = `
+        <div class="results-section">
+          <div class="results-header">
+            Found ${data.count} result${data.count !== 1 ? 's' : ''} for "${query}"
+          </div>
+      `;
+
+      data.posts.forEach((post: any) => {
+        html += `
+          <div class="search-result">
+            <h2><a href="/posts/${post.slug}">${post.title}</a></h2>
+            ${post.snippet ? `<div class="snippet">${post.snippet}</div>` : ''}
+            ${post.excerpt ? `<p>${post.excerpt}</p>` : ''}
+            <div class="meta">
+              <span>By ${post.author}</span>
+              <span>${new Date(post.published_date).toLocaleDateString()}</span>
+            </div>
+          </div>
+        `;
+      });
+
+      html += '</div>';
+      resultsContainer.innerHTML = html;
+    } catch (error) {
+      resultsContainer.innerHTML = `
+        <div class="no-results">
+          <h2>Search Error</h2>
+          <p>Something went wrong. Please try again.</p>
+        </div>
+      `;
+    }
+  }
+</script>

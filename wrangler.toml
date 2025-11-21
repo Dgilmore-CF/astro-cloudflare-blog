@@ -7,7 +7,7 @@ pages_build_output_dir = "./dist"
 [[d1_databases]]
 binding = "DB"
 database_name = "blog-db"
-database_id = "your-database-id" # Replace with actual D1 database ID after creation
+database_id = "23572b20-0ee7-450c-b1b8-8d5eacdd3fbb" # Replace with actual D1 database ID after creation
 
 # R2 Bucket binding for image storage
 [[r2_buckets]]
@@ -18,3 +18,4 @@ preview_bucket_name = "blog-images-preview"
 # Environment variables (optional)
 [vars]
 ENVIRONMENT = "production"
+
