@@ -1,0 +1,152 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="About - CloudBlog" description="Learn more about CloudBlog">
+  <div class="about-page">
+    <h1>About CloudBlog</h1>
+    
+    <section class="about-section">
+      <h2>Built with Modern Technologies</h2>
+      <p>
+        CloudBlog is a modern, serverless blog platform built with cutting-edge technologies
+        to deliver exceptional performance and developer experience.
+      </p>
+    </section>
+
+    <section class="about-section">
+      <h2>Technology Stack</h2>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h3>⚡ Astro</h3>
+          <p>Lightning-fast static site generator with server-side rendering capabilities</p>
+        </div>
+        <div class="tech-card">
+          <h3>☁️ Cloudflare Workers</h3>
+          <p>Edge computing platform for blazing-fast global performance</p>
+        </div>
+        <div class="tech-card">
+          <h3>🗄️ Cloudflare D1</h3>
+          <p>Distributed SQL database for storing blog posts and metadata</p>
+        </div>
+        <div class="tech-card">
+          <h3>📦 Cloudflare R2</h3>
+          <p>Object storage for images and media files with zero egress fees</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="about-section">
+      <h2>Features</h2>
+      <ul class="features-list">
+        <li>Server-side rendered blog posts with dynamic content</li>
+        <li>SQL database for structured blog data</li>
+        <li>Image storage with R2 object storage</li>
+        <li>RESTful API for post management</li>
+        <li>Tag system for content organization</li>
+        <li>Comment system (can be enabled)</li>
+        <li>View counter for posts</li>
+        <li>Responsive, modern UI design</li>
+      </ul>
+    </section>
+
+    <section class="about-section">
+      <h2>Getting Started</h2>
+      <p>
+        Check out the README.md file in the repository for detailed setup instructions,
+        including how to configure your Cloudflare account, create databases, and deploy
+        your blog to production.
+      </p>
+    </section>
+  </div>
+</Layout>
+
+<style>
+  .about-page {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .about-page h1 {
+    font-size: 2.5rem;
+    color: #1f2937;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  .about-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .about-section h2 {
+    font-size: 1.875rem;
+    color: #1f2937;
+    margin-bottom: 1rem;
+  }
+
+  .about-section p {
+    color: #4b5563;
+    line-height: 1.7;
+    margin-bottom: 1rem;
+  }
+
+  .tech-grid {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .tech-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .tech-card {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1.5rem;
+  }
+
+  .tech-card h3 {
+    font-size: 1.25rem;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+  }
+
+  .tech-card p {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin: 0;
+  }
+
+  .features-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .features-list li {
+    padding: 0.75rem 0;
+    padding-left: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    position: relative;
+    color: #4b5563;
+  }
+
+  .features-list li:last-child {
+    border-bottom: none;
+  }
+
+  .features-list li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #10b981;
+    font-weight: bold;
+  }
+</style>

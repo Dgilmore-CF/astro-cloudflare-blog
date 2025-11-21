@@ -1,0 +1,19 @@
+{
+  "name": "astro-cloudflare-blog",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "astro": "^5.16.0"
+  },
+  "devDependencies": {
+    "@astrojs/cloudflare": "^12.6.11",
+    "@cloudflare/workers-types": "^4.20251121.0",
+    "wrangler": "^4.50.0"
+  }
+}

@@ -1,0 +1,99 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import PostCard from '../../components/PostCard.astro';
+import { BlogDB } from '../../lib/db';
+
+const runtime = Astro.locals.runtime;
+let posts = [];
+let error = null;
+
+if (runtime?.env?.DB) {
+  try {
+    const db = new BlogDB(runtime.env.DB);
+    posts = await db.getPosts('published', 50, 0);
+  } catch (e) {
+    error = 'Failed to load posts';
+    console.error(e);
+  }
+} else {
+  error = 'Database not configured';
+}
+---
+
+<Layout title="All Posts - CloudBlog" description="Browse all blog posts">
+  <div class="page-header">
+    <h1>All Posts</h1>
+    <p>Explore our collection of articles</p>
+  </div>
+
+  {error && (
+    <div class="error-banner">
+      <p>{error}</p>
+    </div>
+  )}
+
+  {posts.length === 0 && !error && (
+    <div class="no-posts">
+      <p>No posts available yet.</p>
+    </div>
+  )}
+
+  {posts.length > 0 && (
+    <div class="posts-grid">
+      {posts.map((post) => (
+        <PostCard
+          title={post.title}
+          slug={post.slug}
+          excerpt={post.excerpt}
+          featuredImage={post.featured_image}
+          author={post.author}
+          publishedDate={post.published_date}
+        />
+      ))}
+    </div>
+  )}
+</Layout>
+
+<style>
+  .page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .page-header h1 {
+    font-size: 2.5rem;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+  }
+
+  .page-header p {
+    font-size: 1.125rem;
+    color: #6b7280;
+  }
+
+  .error-banner {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    color: #991b1b;
+  }
+
+  .no-posts {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6b7280;
+  }
+
+  .posts-grid {
+    display: grid;
+    gap: 2rem;
+  }
+
+  @media (min-width: 768px) {
+    .posts-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>

@@ -1,0 +1,269 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { BlogDB } from '../../lib/db';
+
+const { slug } = Astro.params;
+const runtime = Astro.locals.runtime;
+
+let post = null;
+let tags = [];
+let error = null;
+
+if (!slug) {
+  return Astro.redirect('/');
+}
+
+if (runtime?.env?.DB) {
+  try {
+    const db = new BlogDB(runtime.env.DB);
+    post = await db.getPostBySlug(slug);
+    
+    if (post) {
+      // Increment view count
+      await db.incrementViews(post.id);
+      // Get tags for this post
+      tags = await db.getPostTags(post.id);
+    }
+  } catch (e) {
+    error = 'Failed to load post';
+    console.error(e);
+  }
+} else {
+  error = 'Database not configured';
+}
+
+if (!post && !error) {
+  return Astro.redirect('/404');
+}
+
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+---
+
+<Layout title={post ? `${post.title} - CloudBlog` : 'Post Not Found'} description={post?.excerpt}>
+  {error && (
+    <div class="error-banner">
+      <p>{error}</p>
+    </div>
+  )}
+
+  {post && (
+    <article class="post">
+      <header class="post-header">
+        {post.featured_image && (
+          <div class="featured-image">
+            <img src={post.featured_image} alt={post.title} />
+          </div>
+        )}
+        <h1>{post.title}</h1>
+        <div class="post-meta">
+          <span class="author">By {post.author}</span>
+          <span class="date">{formatDate(post.published_date)}</span>
+          <span class="views">{post.views} views</span>
+        </div>
+        {tags.length > 0 && (
+          <div class="tags">
+            {tags.map((tag) => (
+              <span class="tag">{tag.name}</span>
+            ))}
+          </div>
+        )}
+      </header>
+      
+      <div class="post-content">
+        <div set:html={post.content} />
+      </div>
+
+      {post.updated_date && (
+        <div class="post-footer">
+          <p>Last updated: {formatDate(post.updated_date)}</p>
+        </div>
+      )}
+    </article>
+  )}
+
+  {!post && !error && (
+    <div class="not-found">
+      <h1>Post Not Found</h1>
+      <p>The post you're looking for doesn't exist.</p>
+      <a href="/">Return to Home</a>
+    </div>
+  )}
+</Layout>
+
+<style>
+  .error-banner {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    color: #991b1b;
+  }
+
+  .post {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .post-header {
+    padding: 2rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .featured-image {
+    margin: -2rem -2rem 2rem;
+    height: 400px;
+    overflow: hidden;
+  }
+
+  .featured-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .post-header h1 {
+    font-size: 2.5rem;
+    color: #1f2937;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+  }
+
+  .post-meta {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 1rem;
+  }
+
+  .post-meta span {
+    display: flex;
+    align-items: center;
+  }
+
+  .author {
+    font-weight: 600;
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  .tag {
+    background: #eff6ff;
+    color: #2563eb;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .post-content {
+    padding: 2rem;
+    font-size: 1.125rem;
+    line-height: 1.8;
+    color: #374151;
+  }
+
+  .post-content :global(h2) {
+    font-size: 1.875rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: #1f2937;
+  }
+
+  .post-content :global(h3) {
+    font-size: 1.5rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: #1f2937;
+  }
+
+  .post-content :global(p) {
+    margin-bottom: 1rem;
+  }
+
+  .post-content :global(ul),
+  .post-content :global(ol) {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+  }
+
+  .post-content :global(li) {
+    margin-bottom: 0.5rem;
+  }
+
+  .post-content :global(code) {
+    background: #f3f4f6;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+    font-family: 'Courier New', monospace;
+  }
+
+  .post-content :global(pre) {
+    background: #1f2937;
+    color: #f3f4f6;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+  }
+
+  .post-content :global(pre code) {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+
+  .post-footer {
+    padding: 1rem 2rem;
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+
+  .not-found {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+
+  .not-found h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #1f2937;
+  }
+
+  .not-found p {
+    color: #6b7280;
+    margin-bottom: 2rem;
+  }
+
+  .not-found a {
+    display: inline-block;
+    background: #2563eb;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+
+  .not-found a:hover {
+    background: #1d4ed8;
+  }
+</style>

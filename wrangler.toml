@@ -1,0 +1,20 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "astro-cloudflare-blog"
+compatibility_date = "2024-11-21"
+pages_build_output_dir = "./dist"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "blog-db"
+database_id = "your-database-id" # Replace with actual D1 database ID after creation
+
+# R2 Bucket binding for image storage
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "blog-images"
+preview_bucket_name = "blog-images-preview"
+
+# Environment variables (optional)
+[vars]
+ENVIRONMENT = "production"
